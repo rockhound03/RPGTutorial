@@ -10,7 +10,14 @@ public class Player : MonoBehaviour
     Animation animate;
     private bool moving;
     public float attackTimer;
+    private float currentAttackTimer;
     private bool attacking;
+    private bool followingEnemy;
+
+    private float damage;
+    public float minDamage;
+    public float maxDamage;
+    private bool attacked;
 
     // PMR
     public GameObject playerMovePoint;
@@ -21,7 +28,7 @@ public class Player : MonoBehaviour
     
     // Enemy
     private bool triggeringEnemy;
-    private GameObject _enemy;
+    private GameObject attackingEnemy;
 
     
 
@@ -33,6 +40,7 @@ public class Player : MonoBehaviour
         pmr = Instantiate(playerMovePoint.transform, this.transform.position, Quaternion.identity);
         pmr.GetComponent<BoxCollider>().enabled = false;
         animate = GetComponent<Animation>();
+        currentAttackTimer = attackTimer;
     }
 
 
@@ -42,6 +50,7 @@ public class Player : MonoBehaviour
         // Player movement
         Plane playerPlane = new Plane(Vector3.up, transform.position);
         Ray ray = UnityEngine.Camera.main.ScreenPointToRay(Input.mousePosition);
+        RaycastHit hit;
         float hitDistance = 0.0f;
 
         if(playerPlane.Raycast(ray, out hitDistance))
@@ -54,6 +63,21 @@ public class Player : MonoBehaviour
                 triggeringPMR = false;
                 pmr.transform.position = mousePosition;
                 pmr.GetComponent<BoxCollider>().enabled = true;
+
+                if(Physics.Raycast(ray,out hit))
+                {
+                    //print(hit.collider.gameObject.name);
+                    if (hit.collider.tag == "Enemy")
+                    {
+                        attackingEnemy = hit.collider.gameObject;
+                        followingEnemy = true;
+                    }
+                }
+                else
+                {
+                    attackingEnemy = null;
+                    followingEnemy = false;
+                }
             }
         }
 
@@ -83,6 +107,17 @@ public class Player : MonoBehaviour
         {
             Attack();
         }
+
+        if(attacked)
+        {
+            currentAttackTimer -= 1 * Time.deltaTime;
+        }
+
+        if(currentAttackTimer <= 0)
+        {
+            currentAttackTimer = attackTimer;
+            attacked = false;
+        }
     }
 
     public void Idle()
@@ -93,17 +128,32 @@ public class Player : MonoBehaviour
     public void Move()
     {
         //transform.position = Vector3.MoveTowards(transform.position, pmr.transform.position, movementSpeed);
-        transform.position = Vector3.MoveTowards(transform.position, pmr.transform.position, movementSpeed);
-        this.transform.LookAt(pmr.transform);
+        if (followingEnemy)
+        {
 
+            transform.position = Vector3.MoveTowards(transform.position, attackingEnemy.transform.position, movementSpeed);
+            this.transform.LookAt(attackingEnemy.transform);
+
+        }
+        else
+        {
+            transform.position = Vector3.MoveTowards(transform.position, pmr.transform.position, movementSpeed);
+            this.transform.LookAt(pmr.transform);
+        }
         animate.CrossFade("walk");
 
     }
 
     public void Attack()
     {
+        if (!attacked)
+        {
+            damage = Random.Range(minDamage, maxDamage);
+            print(damage);
+            attacked = true;
+        }
         animate.CrossFade("attack");
-        transform.LookAt(_enemy.transform);
+        transform.LookAt(attackingEnemy.transform);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -114,9 +164,9 @@ public class Player : MonoBehaviour
         }
         else if(other.tag == "Enemy")
         {
-            print(attacking);
+            //print(attacking);
             triggeringEnemy = true;
-            _enemy = other.gameObject;
+            //_enemy = other.gameObject;
         }
     }
 
@@ -130,7 +180,7 @@ public class Player : MonoBehaviour
         if (other.tag == "Enemy")
         {
             triggeringEnemy = false;
-            _enemy = null;
+            //_enemy = null;
         }
     }
 }
