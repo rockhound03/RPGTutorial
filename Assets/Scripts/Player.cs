@@ -4,25 +4,32 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    // Start is called before the first frame update
     // Variables
+    // Player
     public float movementSpeed;
+    Animation animate;
+    private bool moving;
+    public float attackTimer;
+    private bool attacking;
 
+    // PMR
     public GameObject playerMovePoint;
     private bool triggeringPMR;
     private Transform pmr;
     //private bool pmrSpawned;
 
-    private bool moving;
+    
+    // Enemy
+    private bool triggeringEnemy;
+    private GameObject _enemy;
 
-    Animation animate;
+    
 
-
-
-    // Update is called once per frame
+    
     // Functions
     private void Start()
     {
+        // Start is called before the first frame update
         pmr = Instantiate(playerMovePoint.transform, this.transform.position, Quaternion.identity);
         pmr.GetComponent<BoxCollider>().enabled = false;
         animate = GetComponent<Animation>();
@@ -31,6 +38,7 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
+        // Update is called once per frame
         // Player movement
         Plane playerPlane = new Plane(Vector3.up, transform.position);
         Ray ray = UnityEngine.Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -55,11 +63,25 @@ public class Player : MonoBehaviour
             Move();
         }
         else
-            Idle();
+        {
+            if (attacking)
+            {
+                Attack();
+            }
+            else
+            {
+                Idle();
+            }
+        }
 
         if(triggeringPMR)
         {
             moving = false;
+        }
+
+        if(triggeringEnemy)
+        {
+            Attack();
         }
     }
 
@@ -78,11 +100,23 @@ public class Player : MonoBehaviour
 
     }
 
+    public void Attack()
+    {
+        animate.CrossFade("attack");
+        transform.LookAt(_enemy.transform);
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if(other.tag == "PMR")
         {
             triggeringPMR = true;
+        }
+        else if(other.tag == "Enemy")
+        {
+            print(attacking);
+            triggeringEnemy = true;
+            _enemy = other.gameObject;
         }
     }
 
@@ -91,6 +125,12 @@ public class Player : MonoBehaviour
         if(other.tag == "PMR")
         {
             triggeringPMR = false;
+        }
+
+        if (other.tag == "Enemy")
+        {
+            triggeringEnemy = false;
+            _enemy = null;
         }
     }
 }
