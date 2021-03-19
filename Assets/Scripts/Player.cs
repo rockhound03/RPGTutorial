@@ -43,6 +43,7 @@ public class Player : MonoBehaviour
             if(Input.GetMouseButtonDown(0))
             {
                 moving = true;
+                triggeringPMR = false;
                 pmr.transform.position = mousePosition;
                 pmr.GetComponent<BoxCollider>().enabled = true;
             }
