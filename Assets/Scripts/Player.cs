@@ -9,7 +9,7 @@ public class Player : MonoBehaviour
     public float movementSpeed;
 
     public GameObject playerMovePoint;
-    private GameObject triggeringPMR;
+    private bool triggeringPMR;
     private Transform pmr;
     //private bool pmrSpawned;
 
@@ -24,6 +24,7 @@ public class Player : MonoBehaviour
     private void Start()
     {
         pmr = Instantiate(playerMovePoint.transform, this.transform.position, Quaternion.identity);
+        pmr.GetComponent<BoxCollider>().enabled = false;
         animate = GetComponent<Animation>();
     }
 
@@ -43,6 +44,7 @@ public class Player : MonoBehaviour
             {
                 moving = true;
                 pmr.transform.position = mousePosition;
+                pmr.GetComponent<BoxCollider>().enabled = true;
             }
         }
 
@@ -51,6 +53,18 @@ public class Player : MonoBehaviour
         {
             Move();
         }
+        else
+            Idle();
+
+        if(triggeringPMR)
+        {
+            moving = false;
+        }
+    }
+
+    public void Idle()
+    {
+        animate.CrossFade("idle");
     }
 
     public void Move()
@@ -67,7 +81,15 @@ public class Player : MonoBehaviour
     {
         if(other.tag == "PMR")
         {
-            triggeringPMR = other.gameObject;
+            triggeringPMR = true;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if(other.tag == "PMR")
+        {
+            triggeringPMR = false;
         }
     }
 }
